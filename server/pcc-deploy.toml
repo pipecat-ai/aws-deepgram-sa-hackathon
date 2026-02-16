@@ -1,0 +1,12 @@
+agent_name = "aws-deepgram-2026-03"
+image = "chadbailey59/aws-deepgram-2026-03:0.1"
+# RECOMMENDED: Set an image pull secret:
+# https://docs.pipecat.ai/deployment/pipecat-cloud/fundamentals/secrets#image-pull-secrets
+image_credentials = "my-image-pull-secret"
+secret_set = "aws-deepgram-2026-03-secrets"
+agent_profile = "agent-1x"
+[krisp_viva]
+	audio_filter = "tel"
+
+[scaling]
+	min_agents = 1
