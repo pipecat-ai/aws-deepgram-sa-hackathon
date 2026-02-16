@@ -1,107 +1,87 @@
-# aws-deepgram-2026-03
+# AWS + Deepgram Voice AI Hackathon: Pipecat Quickstart Project
 
-A Pipecat AI voice agent built with a cascade pipeline (STT → LLM → TTS).
+This is the quickest way to get started building a Pipecat voice AI agent for the AWS + Deepgram Voice AI Hackathon. It was built with the [Pipecat CLI](https://github.com/pipecat-ai/pipecat-cli), and customized to make it as fast as possible to get a working bot.
 
-## Configuration
+To start, clone this repo, then `cd aws-deepgram-sa-hackathon`. From there, in your first terminal window:
 
-- **Bot Type**: Web
-- **Transport(s)**: Daily (WebRTC)
-- **Pipeline**: Cascade
-  - **STT**: Deepgram
-  - **LLM**: AWS Bedrock
-  - **TTS**: Deepgram
-- **Features**:
-  - Krisp Noise Cancellation
+## Running your bot locally 
 
-## Setup
-
-### Server
-
-1. **Navigate to server directory**:
-
-   ```bash
-   cd server
-   ```
-
-2. **Install dependencies**:
-
-   ```bash
-   uv sync
-   ```
-
-3. **Configure environment variables**:
-
-   ```bash
-   cp .env.example .env
-   # Edit .env and add your API keys
-   ```
-
-4. **Run the bot**:
-
-   - Daily: `uv run bot.py --transport daily`
-
-### Client
-
-1. **Navigate to client directory**:
-
-   ```bash
-   cd client
-   ```
-
-2. **Install dependencies**:
-
-   ```bash
-   npm install
-   ```
-
-3. **Configure environment variables**:
-
-   ```bash
-   cp env.example .env.local
-   # Edit .env.local if needed (defaults to localhost:7860)
-   ```
-
-   > **Note:** Environment variables in Vite are bundled into the client and exposed in the browser. For production applications that require secret protection, consider implementing a backend proxy server to handle API requests and manage sensitive credentials securely.
-
-4. **Run development server**:
-
-   ```bash
-   npm run dev
-   ```
-
-5. **Open browser**:
-
-   http://localhost:5173
-
-## Project Structure
-
+```bash
+cd server
+cp example.env .env # and fill in the values
+uv sync
+uv run bot.py --transport daily
 ```
-aws-deepgram-2026-03/
-├── server/              # Python bot server
-│   ├── bot.py           # Main bot implementation
-│   ├── pyproject.toml   # Python dependencies
-│   ├── env.example      # Environment variables template
-│   ├── .env             # Your API keys (git-ignored)
-│   ├── Dockerfile       # Container image for Pipecat Cloud
-│   └── pcc-deploy.toml  # Pipecat Cloud deployment config
-├── client/              # React application
-│   ├── src/             # Client source code
-│   ├── package.json     # Node dependencies
-│   └── ...
-├── .gitignore           # Git ignore patterns
-└── README.md            # This file
+
+Then, in another terminal window:
+
+```bash
+cd client
+npm i
+cp example.env .env.local # and fill in the values
+npm run dev
 ```
+
+Then, visit http://localhost:3000 in your browser and click *Connect* to start talking to your bot!
+
+If you're new to Pipecat, there's a great explanation of the botfile here, in the Pipecat docs:
+
+https://docs.pipecat.ai/getting-started/quickstart#understanding-the-quickstart-bot
+
+## Customizing the bot
+
+
+The `server/bot.py` file contains your Pipecat bot. To get started customizing it, look for the phrase `You are a friendly AI assistant`. That `messages` variable is used by the bot's context manager, which stores the conversation between the bot and the user. You can change the `content` property of that first message to change your bot's system prompt.
+
+Next, you'll almost certainly want to use function calling to extend your bot's functionality. Search for the word `weather` to see how this bot can answer questions about the weather (using fake data). You can read a lot more about function calling in [the Pipecat docs page about it](https://docs.pipecat.ai/guides/learn/function-calling#function-calling).
+
+## Adding AWS functionality
+
+TKTKTK
 
 ## Deploying to Pipecat Cloud
 
-This project is configured for deployment to Pipecat Cloud. You can learn how to deploy to Pipecat Cloud in the [Pipecat Quickstart Guide](https://docs.pipecat.ai/getting-started/quickstart#step-2%3A-deploy-to-production).
+For the hackathon, you can perform your live demo by running the bot locally on your computer. But if you want to deploy your bot and deliver a hosted version, you can use [Pipecat Cloud](https://pipecat.daily.co).
 
-Refer to the [Pipecat Cloud Documentation](https://docs.pipecat.ai/deployment/pipecat-cloud/introduction) to learn more about configuring, deploying, and managing your agents in Pipecat Cloud.
+To deploy your bot, first you'll need to login to DockerHub:
 
-## Learn More
+```
+docker login
+# create a personal access token at settings/personal-access-tokens/create
+```
 
-- [Pipecat Documentation](https://docs.pipecat.ai/)
-- [Voice UI Kit Documentation](https://voiceuikit.pipecat.ai/)
-- [Pipecat GitHub](https://github.com/pipecat-ai/pipecat)
-- [Pipecat Examples](https://github.com/pipecat-ai/pipecat-examples)
-- [Discord Community](https://discord.gg/pipecat)
+Then you'll want to set up the Pipecat CLI if you haven't already:
+
+```
+uv tool install "pipecat-ai-cli[tail]"
+pipecat cloud auth login
+pipecat cloud secrets image-pull-secret my-image-pull-secret https://index.docker.io/v1/ # use your dockerhub username, but for password, put your personal access token
+pipecat cloud docker build-push -u <your_dockerhub_username>
+nvim pcc-deploy.toml # and add your username to the image path
+pipecat cloud secrets set --file .env aws-deepgram-2026-03-secrets
+pipecat cloud deploy # pcc_deploy.toml is configured to use my-image--pull-secret
+```
+Talk to your agent in the Pipecat Cloud Sandbox:
+
+```bash
+# create a public API key so you can start bot sessions
+
+TKTKTK URL
+
+Then, configure and deploy your frontend:
+
+TKTKTK deploy frontend?!??!!?
+
+⚠️  Cross-platform build support missing
+   Building ARM64 images on x86_64 requires QEMU and binfmt_misc support.
+
+   This is a one-time setup that persists across Docker restarts.
+
+
+public bot key:
+pk_8ddefb8b-f176-45e6-839d-7b0596429026
+
+
+or this for github image build: https://github.com/daily-co/pipecat-cloud-deploy-action
+
+

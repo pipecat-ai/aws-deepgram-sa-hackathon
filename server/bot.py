@@ -38,8 +38,36 @@ from pipecat.pipeline.pipeline import Pipeline
 from pipecat.transports.daily.transport import DailyTransport, DailyParams
 from pipecat.services.aws.llm import AWSBedrockLLMService
 from pipecat.frames.frames import LLMRunFrame
+from pipecat.adapters.schemas.function_schema import FunctionSchema
+from pipecat.adapters.schemas.tools_schema import ToolsSchema
+from pipecat.services.llm_service import FunctionCallParams
 
 load_dotenv(override=True)
+
+
+# Define a function using the standard schema
+weather_function = FunctionSchema(
+    name="get_current_weather",
+    description="Get the current weather in a location",
+    properties={
+        "location": {
+            "type": "string",
+            "description": "The city and state, e.g. San Francisco, CA",
+        },
+        "format": {
+            "type": "string",
+            "enum": ["celsius", "fahrenheit"],
+            "description": "The temperature unit to use.",
+        },
+    },
+    required=["location", "format"]
+)
+
+# Main function handler - called to execute the function
+async def fetch_weather_from_api(params: FunctionCallParams):
+    # Fetch weather data from your API
+    weather_data = {"conditions": "sunny", "temperature": "75"}
+    await params.result_callback(weather_data)
 
 
 
@@ -65,6 +93,13 @@ async def run_bot(transport: BaseTransport):
         params=AWSBedrockLLMService.InputParams(temperature=0.8)
     )
 
+    # Register the weather function
+    llm.register_function(
+        "get_current_weather",
+        fetch_weather_from_api,
+        cancel_on_interruption=True,  # Cancel if user interrupts (default: True)
+    )
+
 
 
     messages = [
@@ -74,7 +109,9 @@ async def run_bot(transport: BaseTransport):
         },
     ]
 
-    context = LLMContext(messages)
+    tools = ToolsSchema(standard_tools=[weather_function])
+
+    context = LLMContext(messages=messages, tools=tools )
     user_aggregator, assistant_aggregator = LLMContextAggregatorPair(
         context,
         user_params=LLMUserAggregatorParams(
