@@ -37,7 +37,7 @@ Next, you'll almost certainly want to use function calling to extend your bot's 
 
 ## Adding AWS functionality
 
-TKTKTK
+Coming soon!
 
 ## Deploying to Pipecat Cloud
 
@@ -65,12 +65,12 @@ Talk to your agent in the Pipecat Cloud Sandbox:
 
 ```bash
 # create a public API key so you can start bot sessions
+```
 
-TKTKTK URL
 
 Then, configure and deploy your frontend:
 
-TKTKTK deploy frontend?!??!!?
+Coming soon!
 
 
 
