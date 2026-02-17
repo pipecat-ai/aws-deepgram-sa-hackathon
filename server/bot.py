@@ -82,7 +82,7 @@ async def run_bot(transport: BaseTransport):
     # Text-to-Speech service
     tts = DeepgramTTSService(
             api_key=os.getenv("DEEPGRAM_API_KEY"),
-            voice=os.getenv("DEEPGRAM_VOICE_ID")
+            # voice=os.getenv("DEEPGRAM_VOICE_ID")
         )
 
 
@@ -104,8 +104,8 @@ async def run_bot(transport: BaseTransport):
 
     messages = [
         {
-            "role": "system",
-            "content": "You are a friendly AI assistant. Respond naturally and keep your answers conversational.",
+            "role": "user",
+            "content": "You are a friendly AI assistant. Respond naturally and keep your answers conversational, and VERY BRIEF. Your output is being converted to audio, so don't include any emoji or special characters.",
         },
     ]
 

@@ -72,14 +72,6 @@ Then, configure and deploy your frontend:
 
 TKTKTK deploy frontend?!??!!?
 
-⚠️  Cross-platform build support missing
-   Building ARM64 images on x86_64 requires QEMU and binfmt_misc support.
-
-   This is a one-time setup that persists across Docker restarts.
-
-
-public bot key:
-pk_8ddefb8b-f176-45e6-839d-7b0596429026
 
 
 or this for github image build: https://github.com/daily-co/pipecat-cloud-deploy-action
