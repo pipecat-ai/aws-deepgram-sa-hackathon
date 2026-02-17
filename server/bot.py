@@ -63,13 +63,12 @@ weather_function = FunctionSchema(
     required=["location", "format"]
 )
 
+
 # Main function handler - called to execute the function
 async def fetch_weather_from_api(params: FunctionCallParams):
     # Fetch weather data from your API
     weather_data = {"conditions": "sunny", "temperature": "75"}
     await params.result_callback(weather_data)
-
-
 
 
 async def run_bot(transport: BaseTransport):
@@ -82,6 +81,7 @@ async def run_bot(transport: BaseTransport):
     # Text-to-Speech service
     tts = DeepgramTTSService(
             api_key=os.getenv("DEEPGRAM_API_KEY"),
+            # Uncomment this property to change the Deepgram TTS voice
             # voice=os.getenv("DEEPGRAM_VOICE_ID")
         )
 
@@ -100,12 +100,11 @@ async def run_bot(transport: BaseTransport):
         cancel_on_interruption=True,  # Cancel if user interrupts (default: True)
     )
 
-
-
     messages = [
         {
             "role": "user",
             "content": "You are a friendly AI assistant. Respond naturally and keep your answers conversational, and VERY BRIEF. Your output is being converted to audio, so don't include any emoji or special characters.",
+
         },
     ]
 
@@ -119,28 +118,15 @@ async def run_bot(transport: BaseTransport):
         ),
     )
 
-
-    
-
-
     # Pipeline - assembled from reusable components
     pipeline = Pipeline([
         transport.input(),
-
         stt,
-
         user_aggregator,
-
         llm,
-
         tts,
-
-        
         transport.output(),
-
-        
         assistant_aggregator,
-
     ])
 
 
@@ -167,9 +153,6 @@ async def run_bot(transport: BaseTransport):
     async def on_client_disconnected(transport, client):
         logger.info("Client disconnected")
         await task.cancel()
-
-
-
 
     runner = PipelineRunner(handle_sigint=False)
 
