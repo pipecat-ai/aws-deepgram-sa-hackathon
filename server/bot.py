@@ -44,7 +44,9 @@ from pipecat.services.llm_service import FunctionCallParams
 
 load_dotenv(override=True)
 
-
+####
+#### Customize function here! Update schema
+####
 # Define a function using the standard schema
 weather_function = FunctionSchema(
     name="get_current_weather",
@@ -80,10 +82,9 @@ async def run_bot(transport: BaseTransport):
 
     # Text-to-Speech service
     tts = DeepgramTTSService(
-            api_key=os.getenv("DEEPGRAM_API_KEY"),
-            # Uncomment this property to change the Deepgram TTS voice
-            # voice=os.getenv("DEEPGRAM_VOICE_ID")
-        )
+        api_key=os.getenv("DEEPGRAM_API_KEY"),
+        voice=os.getenv("DEEPGRAM_VOICE_ID") # Optional: default is "aura-2-helena-en"
+    )
 
 
     # LLM service
@@ -100,6 +101,9 @@ async def run_bot(transport: BaseTransport):
         cancel_on_interruption=True,  # Cancel if user interrupts (default: True)
     )
 
+    ####
+    #### Customize bot prompt here! Update "content"
+    ####
     messages = [
         {
             "role": "user",

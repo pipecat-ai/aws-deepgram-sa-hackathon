@@ -225,3 +225,4 @@ client/.turbo/
 client/.vercel
 client/.env*.local
 client/*.tsbuildinfo
+client/package-lock.json
