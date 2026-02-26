@@ -20,8 +20,10 @@ Run the bot using::
     uv run bot.py
 """
 
-
-from pipecat.processors.aggregators.llm_response_universal import LLMContextAggregatorPair, LLMUserAggregatorParams
+from pipecat.processors.aggregators.llm_response_universal import (
+    LLMContextAggregatorPair,
+    LLMUserAggregatorParams,
+)
 from loguru import logger
 from pipecat.audio.vad.silero import SileroVADAnalyzer
 from dotenv import load_dotenv
@@ -44,7 +46,9 @@ from pipecat.services.llm_service import FunctionCallParams
 
 load_dotenv(override=True)
 
-
+####
+#### Customize function here! Update schema
+####
 # Define a function using the standard schema
 weather_function = FunctionSchema(
     name="get_current_weather",
@@ -60,7 +64,7 @@ weather_function = FunctionSchema(
             "description": "The temperature unit to use.",
         },
     },
-    required=["location", "format"]
+    required=["location", "format"],
 )
 
 
@@ -80,17 +84,15 @@ async def run_bot(transport: BaseTransport):
 
     # Text-to-Speech service
     tts = DeepgramTTSService(
-            api_key=os.getenv("DEEPGRAM_API_KEY"),
-            # Uncomment this property to change the Deepgram TTS voice
-            # voice=os.getenv("DEEPGRAM_VOICE_ID")
-        )
-
+        api_key=os.getenv("DEEPGRAM_API_KEY"),
+        voice=os.getenv("DEEPGRAM_VOICE_ID"),  # Optional: default is "aura-2-helena-en"
+    )
 
     # LLM service
     llm = AWSBedrockLLMService(
         aws_region=os.getenv("AWS_REGION"),
         model=os.getenv("AWS_BEDROCK_MODEL"),
-        params=AWSBedrockLLMService.InputParams(temperature=0.8)
+        params=AWSBedrockLLMService.InputParams(temperature=0.8),
     )
 
     # Register the weather function
@@ -100,17 +102,19 @@ async def run_bot(transport: BaseTransport):
         cancel_on_interruption=True,  # Cancel if user interrupts (default: True)
     )
 
+    ####
+    #### Customize bot prompt here! Update "content"
+    ####
     messages = [
         {
             "role": "user",
             "content": "You are a friendly AI assistant. Respond naturally and keep your answers conversational, and VERY BRIEF. Your output is being converted to audio, so don't include any emoji or special characters.",
-
         },
     ]
 
     tools = ToolsSchema(standard_tools=[weather_function])
 
-    context = LLMContext(messages=messages, tools=tools )
+    context = LLMContext(messages=messages, tools=tools)
     user_aggregator, assistant_aggregator = LLMContextAggregatorPair(
         context,
         user_params=LLMUserAggregatorParams(
@@ -119,16 +123,17 @@ async def run_bot(transport: BaseTransport):
     )
 
     # Pipeline - assembled from reusable components
-    pipeline = Pipeline([
-        transport.input(),
-        stt,
-        user_aggregator,
-        llm,
-        tts,
-        transport.output(),
-        assistant_aggregator,
-    ])
-
+    pipeline = Pipeline(
+        [
+            transport.input(),
+            stt,
+            user_aggregator,
+            llm,
+            tts,
+            transport.output(),
+            assistant_aggregator,
+        ]
+    )
 
     task = PipelineTask(
         pipeline,
@@ -136,8 +141,6 @@ async def run_bot(transport: BaseTransport):
             enable_metrics=True,
             enable_usage_metrics=True,
         ),
-        observers=[
-        ],
     )
 
     @task.rtvi.event_handler("on_client_ready")
