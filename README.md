@@ -60,6 +60,54 @@ You should see something like:
 
 Now visit http://localhost:5173 in your browser and click **Connect** to start talking to your bot!
 
+## Architecture Diagram
+
+```mermaid
+graph TD
+    subgraph Users
+        A["👤 <b>End-user</b>"] --> B["React Web Client<br/><i>Vite + RTVI</i>"]
+    end
+
+    subgraph Transport["Daily Server - WebRTC Transport"]
+        C[Audio In]
+        D[Audio Out]
+    end
+
+    subgraph Pipeline["Conversational Voice Agent - Orchestrated by Pipecat"]
+        E["Krisp Noise Cancellation<br/><i>Cloud only</i>"]
+        F["Silero VAD<br/><i>Voice Activity Detection</i>"]
+        G["Deepgram Nova<br/><b>Speech to Text (STT)</b>"]
+        H["Amazon Bedrock<br/><b>Claude Haiku 4.5</b>"]
+        I["Tool Use<br/><i>get_current_weather()</i>"]
+        J["Deepgram Aura<br/><b>Text to Speech (TTS)</b>"]
+    end
+
+    B <-->|"Real-time Communication (WebRTC)"| Transport
+
+    C -->|Voice input| E
+    E --> F
+    F --> G
+    G -->|NLU query| H
+    H -->|Function call| I
+    I -->|Result| H
+    H -->|NLG response| J
+    J -->|Voice output| D
+
+    style Users fill:#fafafa,stroke:#ddd,color:#888
+    style Transport fill:#fafafa,stroke:#ddd,color:#888
+    style Pipeline fill:#fafafa,stroke:#ddd,color:#888
+    style A fill:#333,color:#fff
+    style B fill:#fff,stroke:#ddd
+    style C fill:#fff,stroke:#ddd
+    style D fill:#fff,stroke:#ddd
+    style E fill:#fff,stroke:#ddd
+    style F fill:#fff,stroke:#ddd
+    style G fill:#fff,stroke:#ddd
+    style H fill:#fff,stroke:#ddd
+    style I fill:#fff,stroke:#ddd
+    style J fill:#fff,stroke:#ddd
+```
+
 ## Customize the bot
 
 The `server/bot.py` file contains your Pipecat bot. To customize it, look for the comment `#### Customize bot prompt here! Update "content"`. That `messages` variable is used by the bot's context manager, which stores the conversation between the bot and the user. Change the `content` property of that first message to update your bot's system prompt.
