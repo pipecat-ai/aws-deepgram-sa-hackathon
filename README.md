@@ -122,14 +122,16 @@ Coming soon!
 
 For the hackathon, you can perform your live demo by running the bot locally on your computer. To deliver a hosted version, use [Pipecat Cloud](https://pipecat.daily.co).
 
-To deploy your bot, first you'll need to login to DockerHub:
+> [!TIP]
+> You can deploy via this [Github Action](https://github.com/daily-co/pipecat-cloud-deploy-action)
 
+- Login to DockerHub:
 ```
 docker login
 # create a personal access token at settings/personal-access-tokens/create
 ```
 
-Then you'll want to set up the Pipecat CLI if you haven't already:
+- Setup Pipecat CLI:
 
 ```bash
 uv tool install "pipecat-ai-cli[tail]"
@@ -140,22 +142,32 @@ nvim pcc-deploy.toml # and add your username to the image path
 pipecat cloud secrets set --file .env aws-deepgram-2026-03-secrets
 pipecat cloud deploy # pcc_deploy.toml is configured to use my-image--pull-secret
 ```
-Talk to your agent in the Pipecat Cloud Sandbox:
 
+- Talk to your agent in the Pipecat Cloud Sandbox:
+![](./sandbox.jpg)
+
+- Create a public API key (at https://pipecat.daily.co/YOUR-ORG/settings/keys) so you can start bot sessions via curl:
 ```bash
-# create a public API key so you can start bot sessions
+export PCC_API_KEY=pk_...
+export YOUR_AGENT=...
+curl -s --request POST \
+--url "https://api.pipecat.daily.co/v1/public/${YOUR_AGENT}/start" \
+--header "authorization: Bearer $PCC_API_KEY" \
+--header 'content-type: application/json' \
+--data '{
+  "createDailyRoom": true,
+  "dailyRoomProperties": { "start_video_off": true }
+}' |jq -r '"\n" + (.dailyRoom | tostring) + "?t=" + (.dailyToken | tostring)
 ```
 
-Then, configure and deploy your frontend:
+- Configure and deploy frontend:
 
 Coming soon!
-
-or this for github image build: https://github.com/daily-co/pipecat-cloud-deploy-action
 
 ## Troubleshooting
 
 ### required .env variables for Server
-- `DAILY_API_KEY` : found at https://pipecat.daily.co/your-org/settings/keys in `Daily` section.
+- `DAILY_API_KEY` : found at https://pipecat.daily.co/YOUR-ORG/settings/keys in `Daily` section.
 - `DEEPGRAM_API_KEY`
 - `AWS_ACCESS_KEY_ID`
 - `AWS_SECRET_ACCESS_KEY`
