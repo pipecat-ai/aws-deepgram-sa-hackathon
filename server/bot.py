@@ -182,6 +182,14 @@ async def run_bot(transport: BaseTransport):
 
 async def bot(runner_args: RunnerArguments):
     """Main bot entry point."""
+    try:
+        from pipecat.audio.filters.krisp_viva_filter import KrispVivaFilter
+
+        krisp_filter = KrispVivaFilter()
+    except ImportError:
+        logger.info("Krisp not available, running without noise cancellation")
+        krisp_filter = None
+
     transport = None
 
     match runner_args:
@@ -192,6 +200,7 @@ async def bot(runner_args: RunnerArguments):
                 "Pipecat Bot",
                 params=DailyParams(
                     audio_in_enabled=True,
+                    audio_in_filter=krisp_filter,
                     audio_out_enabled=True,
                 ),
             )

@@ -1,5 +1,7 @@
 agent_name = "aws-deepgram-sa-hackathon"
 secret_set = "aws-deepgram-sa-hackathon-secrets"
 agent_profile = "agent-1x"
+[krisp_viva]
+	audio_filter = "tel"
 [scaling]
 	min_agents = 1
