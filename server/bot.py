@@ -35,6 +35,8 @@ from pipecat.transports.base_transport import BaseTransport
 from pipecat.runner.types import DailyRunnerArguments
 from pipecat.services.deepgram.stt import DeepgramSTTService
 from pipecat.services.deepgram.sagemaker.stt import DeepgramSageMakerSTTService
+from pipecat.services.deepgram.flux.stt import DeepgramFluxSTTService
+from pipecat.services.deepgram.flux.sagemaker.stt import DeepgramFluxSageMakerSTTService
 from pipecat.pipeline.task import PipelineParams, PipelineTask
 from pipecat.services.deepgram.tts import DeepgramTTSService
 from pipecat.services.deepgram.sagemaker.tts import DeepgramSageMakerTTSService
@@ -45,6 +47,7 @@ from pipecat.frames.frames import LLMRunFrame
 from pipecat.adapters.schemas.function_schema import FunctionSchema
 from pipecat.adapters.schemas.tools_schema import ToolsSchema
 from pipecat.services.llm_service import FunctionCallParams
+from pipecat.turns.user_turn_strategies import ExternalUserTurnStrategies
 
 load_dotenv(override=True)
 
@@ -82,9 +85,21 @@ async def run_bot(transport: BaseTransport):
     logger.info("Starting bot")
 
     use_sagemaker = os.getenv("USE_SAGEMAKER", "false").lower() in ("true", "1", "yes")
+    use_flux = os.getenv("USE_FLUX", "false").lower() in ("true", "1", "yes")
 
     # Speech-to-Text service
-    if use_sagemaker:
+    if use_flux and use_sagemaker:
+        stt = DeepgramFluxSageMakerSTTService(
+            endpoint_name=os.getenv("SAGEMAKER_STT_ENDPOINT_NAME"),
+            region=os.getenv("AWS_REGION"),
+            settings=DeepgramFluxSageMakerSTTService.Settings(min_confidence=0.3),
+        )
+    elif use_flux:
+        stt = DeepgramFluxSTTService(
+            api_key=os.getenv("DEEPGRAM_API_KEY"),
+            settings=DeepgramFluxSTTService.Settings(min_confidence=0.3),
+        )
+    elif use_sagemaker:
         stt = DeepgramSageMakerSTTService(
             endpoint_name=os.getenv("SAGEMAKER_STT_ENDPOINT_NAME"),
             language="multi",
@@ -133,11 +148,12 @@ async def run_bot(transport: BaseTransport):
     tools = ToolsSchema(standard_tools=[weather_function])
 
     context = LLMContext(messages=messages, tools=tools)
+    user_params = LLMUserAggregatorParams(vad_analyzer=SileroVADAnalyzer())
+    if use_flux:
+        user_params.user_turn_strategies = ExternalUserTurnStrategies()
     user_aggregator, assistant_aggregator = LLMContextAggregatorPair(
         context,
-        user_params=LLMUserAggregatorParams(
-            vad_analyzer=SileroVADAnalyzer(),
-        ),
+        user_params=user_params,
     )
 
     # Pipeline - assembled from reusable components
