@@ -76,7 +76,7 @@ graph TD
     subgraph Pipeline["Conversational Voice Agent - Orchestrated by Pipecat"]
         E["Krisp Noise Cancellation<br/><i>Cloud only</i>"]
         F["Silero VAD<br/><i>Voice Activity Detection</i>"]
-        G["Deepgram Nova<br/><b>Speech to Text (STT)</b><br/><i>Direct API or SageMaker</i>"]
+        G["Deepgram Nova or Flux<br/><b>Speech to Text (STT)</b><br/><i>Direct API or SageMaker</i>"]
         H["Amazon Bedrock<br/><b>Claude Haiku 4.5</b>"]
         I["Tool Use<br/><i>get_current_weather()</i>"]
         J["Deepgram Aura<br/><b>Text to Speech (TTS)</b><br/><i>Direct API or SageMaker</i>"]
@@ -113,6 +113,18 @@ graph TD
 The `server/bot.py` file contains your Pipecat bot. To customize it, look for the comment `#### Customize bot prompt here! Update "content"`. That `messages` variable is used by the bot's context manager, which stores the conversation between the bot and the user. Change the `content` property of that first message to update your bot's system prompt.
 
 Next, you'll almost certainly want to use function calling to extend your bot's functionality. Search for the comments `#### Customize function here!` to see how this bot can answer questions about the weather (using fake data). Read more about function calling in [the Pipecat docs page about it](https://docs.pipecat.ai/guides/learn/function-calling#function-calling).
+
+## Use Deepgram Flux STT
+
+[Deepgram Flux](https://developers.deepgram.com/docs/deepgram-flux) is an advanced STT model with improved turn detection, so it handles the end-of-turn decision instead of relying solely on VAD silence detection.
+
+To enable Flux, set `USE_FLUX=true` in your `server/.env`:
+
+```env
+USE_FLUX=true
+```
+
+Flux works with both the direct Deepgram API and SageMaker — just combine `USE_FLUX=true` with `USE_SAGEMAKER=true` to use Flux via SageMaker.
 
 ## Use Deepgram on AWS SageMaker
 
