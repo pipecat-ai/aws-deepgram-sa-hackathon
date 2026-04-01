@@ -76,10 +76,10 @@ graph TD
     subgraph Pipeline["Conversational Voice Agent - Orchestrated by Pipecat"]
         E["Krisp Noise Cancellation<br/><i>Cloud only</i>"]
         F["Silero VAD<br/><i>Voice Activity Detection</i>"]
-        G["Deepgram Nova<br/><b>Speech to Text (STT)</b>"]
+        G["Deepgram Nova<br/><b>Speech to Text (STT)</b><br/><i>Direct API or SageMaker</i>"]
         H["Amazon Bedrock<br/><b>Claude Haiku 4.5</b>"]
         I["Tool Use<br/><i>get_current_weather()</i>"]
-        J["Deepgram Aura<br/><b>Text to Speech (TTS)</b>"]
+        J["Deepgram Aura<br/><b>Text to Speech (TTS)</b><br/><i>Direct API or SageMaker</i>"]
     end
 
     B <-->|"Real-time Communication (WebRTC)"| Transport
@@ -114,71 +114,57 @@ The `server/bot.py` file contains your Pipecat bot. To customize it, look for th
 
 Next, you'll almost certainly want to use function calling to extend your bot's functionality. Search for the comments `#### Customize function here!` to see how this bot can answer questions about the weather (using fake data). Read more about function calling in [the Pipecat docs page about it](https://docs.pipecat.ai/guides/learn/function-calling#function-calling).
 
-## Add AWS functionality
+## Use Deepgram on AWS SageMaker
 
-Coming soon!
+Instead of calling the Deepgram API directly, you can run Deepgram models on your own AWS SageMaker endpoints. This keeps all audio data within your AWS account.
+
+To switch to SageMaker mode, update your `server/.env`:
+
+```env
+USE_SAGEMAKER=true
+SAGEMAKER_STT_ENDPOINT_NAME=my-deepgram-stt-endpoint
+SAGEMAKER_TTS_ENDPOINT_NAME=my-deepgram-tts-endpoint
+```
+
+You'll need:
+1. An AWS account with SageMaker access
+2. A deployed SageMaker endpoint with a [Deepgram STT model](https://aws.amazon.com/marketplace/seller-profile?id=seller-k2hljgxsc7bxw)
+3. A deployed SageMaker endpoint with a [Deepgram TTS model](https://aws.amazon.com/marketplace/seller-profile?id=seller-k2hljgxsc7bxw)
+
+The existing `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, and `AWS_REGION` variables are shared with Bedrock and will be used for SageMaker as well.
+
+Set `USE_SAGEMAKER=false` (the default) to go back to using the Deepgram API directly.
 
 ## Deploy to Pipecat Cloud
 
 For the hackathon, you can perform your live demo by running the bot locally on your computer. To deliver a hosted version, use [Pipecat Cloud](https://pipecat.daily.co).
 
-> [!TIP]
-> You can deploy via this [Github Action](https://github.com/daily-co/pipecat-cloud-deploy-action)
-
-- Login to DockerHub:
-```
-docker login
-# create a personal access token at settings/personal-access-tokens/create
-```
-
-- Setup Pipecat CLI:
+To deploy your bot, first you'll want to install the Pipecat CLI if you haven't already, and authenticate with Pipecat Cloud:
 
 ```bash
-uv tool install "pipecat-ai-cli[tail]"
+uv tool install pipecat-ai-cli
 pipecat cloud auth login
-pipecat cloud secrets image-pull-secret my-image-pull-secret https://index.docker.io/v1/ # use your dockerhub username, but for password, put your personal access token
-pipecat cloud docker build-push -u <your_dockerhub_username>
-nvim pcc-deploy.toml # and add your username to the image path
-pipecat cloud secrets set --file .env aws-deepgram-2026-03-secrets
-pipecat cloud deploy # pcc_deploy.toml is configured to use my-image--pull-secret
 ```
 
-- Talk to your agent in the Pipecat Cloud Sandbox:
-![](./sandbox.jpg)
+You can edit `server/pcc-deploy.toml` if you want to change any Pipecat Cloud settings, but the defaults are fine to get started.
 
-- Create a public API key (at https://pipecat.daily.co/YOUR-ORG/settings/keys) so you can start bot sessions via curl:
+Next, copy the secrets from your .env file to a secret set in Pipecat Cloud, and deploy your bot:
+
+```
+cd /server
+pipecat cloud secrets set --file .env aws-deepgram-sa-hackathon-secrets # assuming you didn't change the name in pcc-deploy.toml
+pipecat cloud deploy
+```
+
+The `min_agents = 1` setting in `pcc-deploy.toml` ensures that there's always a bot instance ready to accept a new session. This minimizes session startup time, but also incurs a small cost. After you're done testing, you can set minimum agents to 0 in the [Pipecat Cloud dashboard](https://pipecat.daily.co).
+
+To talk to your agent, create a Pipecat Cloud public key, then start a session. The second command will return a URL you can click to talk to your agent.
+
 ```bash
-export PCC_API_KEY=pk_...
-export YOUR_AGENT=...
-curl -s --request POST \
---url "https://api.pipecat.daily.co/v1/public/${YOUR_AGENT}/start" \
---header "authorization: Bearer $PCC_API_KEY" \
---header 'content-type: application/json' \
---data '{
-  "createDailyRoom": true,
-  "dailyRoomProperties": { "start_video_off": true }
-}' |jq -r '"\n" + (.dailyRoom | tostring) + "?t=" + (.dailyToken | tostring)
+# create a public API key so you can start bot sessions
+pipecat cloud organizations keys create # answer "yes" to make it your default key
+pipecat cloud agent start aws-deepgram-sa-hackathon --use-daily
 ```
 
-- Configure and deploy frontend:
+Or start a session with your agent in the Pipecat Cloud Sandbox: https://pipecat.daily.co/<your-org-name>/agents/aws-deepgram-sa-hackathon/sandbox
 
-Coming soon!
-
-## Troubleshooting
-
-### required .env variables for Server
-- `DAILY_API_KEY` : found at https://pipecat.daily.co/YOUR-ORG/settings/keys in `Daily` section.
-- `DEEPGRAM_API_KEY`
-- `AWS_ACCESS_KEY_ID`
-- `AWS_SECRET_ACCESS_KEY`
-- `AWS_REGION`
-
-### required .env variables for Client
-- For local dev (these are already set in `client/env.example`):
-	- VITE_BOT_START_URL="http://localhost:7860/start"
-	- VITE_PIPECAT_TRANSPORT=daily
-
-- For Pipecat Cloud:
-	- `VITE_BOT_START_URL` : "https://api.pipecat.daily.co/v1/public/{agentName}/start"
-	- `VITE_PIPECAT_TRANSPORT` : (same as local dev)
-	- `VITE_BOT_START_PUBLIC_API_KEY` : create at https://pipecat.daily.co/{yourOrgName}/settings/keys

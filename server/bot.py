@@ -34,8 +34,10 @@ import os
 from pipecat.transports.base_transport import BaseTransport
 from pipecat.runner.types import DailyRunnerArguments
 from pipecat.services.deepgram.stt import DeepgramSTTService
+from pipecat.services.deepgram.sagemaker.stt import DeepgramSageMakerSTTService
 from pipecat.pipeline.task import PipelineParams, PipelineTask
 from pipecat.services.deepgram.tts import DeepgramTTSService
+from pipecat.services.deepgram.sagemaker.tts import DeepgramSageMakerTTSService
 from pipecat.pipeline.pipeline import Pipeline
 from pipecat.transports.daily.transport import DailyTransport, DailyParams
 from pipecat.services.aws.llm import AWSBedrockLLMService
@@ -79,14 +81,30 @@ async def run_bot(transport: BaseTransport):
     """Main bot logic."""
     logger.info("Starting bot")
 
+    use_sagemaker = os.getenv("USE_SAGEMAKER", "false").lower() in ("true", "1", "yes")
+
     # Speech-to-Text service
-    stt = DeepgramSTTService(api_key=os.getenv("DEEPGRAM_API_KEY"))
+    if use_sagemaker:
+        stt = DeepgramSageMakerSTTService(
+            endpoint_name=os.getenv("SAGEMAKER_STT_ENDPOINT_NAME"),
+            language="multi",
+            region=os.getenv("AWS_REGION"),
+        )
+    else:
+        stt = DeepgramSTTService(api_key=os.getenv("DEEPGRAM_API_KEY"), language="multi")
 
     # Text-to-Speech service
-    tts = DeepgramTTSService(
-        api_key=os.getenv("DEEPGRAM_API_KEY"),
-        voice=os.getenv("DEEPGRAM_VOICE_ID"),  # Optional: default is "aura-2-helena-en"
-    )
+    if use_sagemaker:
+        tts = DeepgramSageMakerTTSService(
+            endpoint_name=os.getenv("SAGEMAKER_TTS_ENDPOINT_NAME"),
+            region=os.getenv("AWS_REGION"),
+            voice=os.getenv("DEEPGRAM_VOICE_ID"),
+        )
+    else:
+        tts = DeepgramTTSService(
+            api_key=os.getenv("DEEPGRAM_API_KEY"),
+            voice=os.getenv("DEEPGRAM_VOICE_ID"),  # Optional: default is "aura-2-helena-en"
+        )
 
     # LLM service
     llm = AWSBedrockLLMService(
@@ -164,14 +182,6 @@ async def run_bot(transport: BaseTransport):
 
 async def bot(runner_args: RunnerArguments):
     """Main bot entry point."""
-    # Krisp is available when deployed to Pipecat Cloud
-    if os.environ.get("ENV") != "local":
-        from pipecat.audio.filters.krisp_viva_filter import KrispVivaFilter
-
-        krisp_filter = KrispVivaFilter()
-    else:
-        krisp_filter = None
-
     transport = None
 
     match runner_args:
@@ -182,7 +192,6 @@ async def bot(runner_args: RunnerArguments):
                 "Pipecat Bot",
                 params=DailyParams(
                     audio_in_enabled=True,
-                    audio_in_filter=krisp_filter,
                     audio_out_enabled=True,
                 ),
             )
