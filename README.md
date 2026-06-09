@@ -1,6 +1,10 @@
 # AWS + Deepgram Voice AI Hackathon: Pipecat Quickstart Project
 
-[![Watch the video: Fraud Detection Voice Agent Demo — Pipecat + Amazon Bedrock + Deepgram on SageMaker](https://img.youtube.com/vi/UAXr2jnY2oI/maxresdefault.jpg)](https://www.youtube.com/watch?v=UAXr2jnY2oI)
+<a href="https://www.youtube.com/watch?v=UAXr2jnY2oI">
+  <img src="https://img.youtube.com/vi/UAXr2jnY2oI/hqdefault.jpg" alt="Fraud Detection Voice Agent Demo — Pipecat + Amazon Bedrock + Deepgram on SageMaker" width="480">
+</a>
+
+▶️ [Watch: Fraud Detection Voice Agent Demo — Pipecat + Amazon Bedrock + Deepgram on SageMaker](https://www.youtube.com/watch?v=UAXr2jnY2oI)
 
 This is the quickest way to get started building a Pipecat voice AI agent for the AWS + Deepgram Voice AI Hackathon.
 
